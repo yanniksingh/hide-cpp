@@ -1,4 +1,5 @@
 #include "hide.hpp"
+#include <exception>
 #include <random>
 #include <string>
 #include <vector>
@@ -17,7 +18,7 @@ namespace hide {
 		messagePlusTerminator.push_back('\0');
 
 		//Make sure the message can fit in the image; throw an exception if not
-		if (messagePlusTerminator.size() * CHAR_BIT > image.size()) return; //TODO: Throw exception
+		if (messagePlusTerminator.size() * CHAR_BIT > image.size()) throw std::invalid_argument("message is too large to embed in image."); 
 
 		//Generate permuation
 		std::vector<size_t> permutation = random_permutation(image.size(), key);
@@ -65,8 +66,10 @@ namespace hide {
 	}
 
 	//Returns a vector containing a pseudo-random permutation of [0,1,...,length-1]
-	//Preconditions: length > 0
 	static std::vector<size_t> random_permutation(size_t length, const std::string& seed) {
+		//Ensure that length is valid
+		assert(length > 0);
+
 		//Create a vector containing [0,1,...length-1]
 		std::vector<size_t> sequence(length);
 		for (size_t i = 0; i < length; i++) {
