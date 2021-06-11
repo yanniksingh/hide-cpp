@@ -13,6 +13,9 @@ namespace hide {
 
 	//Uses LSB matching steganography to embed the string message within the vector image, with the order of embedding determined by the secret key.
 	void embed(std::vector<uint8_t>& image, const std::string& message, const std::string& key) {
+		//Make sure the message doesn't contain the null character, which is reserved
+		if (message.find('\0') != std::string::npos) throw std::invalid_argument("message may not contain null characters.");
+
 		//Append a null terminator to the message
 		std::string messagePlusTerminator = message;
 		messagePlusTerminator.push_back('\0');
