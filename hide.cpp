@@ -8,11 +8,11 @@
 namespace hide {
 	
 	static std::vector<size_t> random_permutation(size_t length, const std::string& seed);
-	static bool extractSymbol(uint8_t pixel);
-	static void embedSymbol(uint8_t& pixel, bool symbol, bool random);
+	static bool extractSymbol(unsigned char pixel);
+	static void embedSymbol(unsigned char& pixel, bool symbol, bool random);
 
 	//Uses LSB matching steganography to embed the string message within the vector image, with the order of embedding determined by the secret key.
-	void embed(std::vector<uint8_t>& image, const std::string& message, const std::string& key) {
+	void embed(std::vector<unsigned char>& image, const std::string& key, const std::string& message) {
 		//Make sure the message doesn't contain the null character, which is reserved
 		if (message.find('\0') != std::string::npos) throw std::invalid_argument("message may not contain null characters.");
 
@@ -43,7 +43,7 @@ namespace hide {
 	
 	//Returns the message embedded in the vector image given by the secret key.
 	//Will always return a message for all inputs, even for images which have not been passed to embed() or images passed to embed() with a different secret key.
-	std::string extract(const std::vector<uint8_t>& image, const std::string& key) {
+	std::string extract(const std::vector<unsigned char>& image, const std::string& key) {
 		//Initialize string to hold message
 		std::string messagePlusTerminator;
 
@@ -98,20 +98,20 @@ namespace hide {
 	}
 	
 	//Returns the least significant bit of the byte pixel
-	static bool extractSymbol(uint8_t pixel) {
+	static bool extractSymbol(unsigned char pixel) {
 		return ((pixel & 1) != 0);
 	}
 	
 	//Embeds the bit symbol in the byte pixel such that the least significant bit of pixel is equal to symbol.
 	//Implements the least significant bit matching (LSBM) method of steganography.
-	static void embedSymbol(uint8_t& pixel, bool symbol, bool random) {
+	static void embedSymbol(unsigned char& pixel, bool symbol, bool random) {
 		if (symbol == extractSymbol(pixel)) {
 			return;
 		}
 		else if (pixel == 0) {
 			pixel++;
 		}
-		else if (pixel == UINT8_MAX) {
+		else if (pixel == UCHAR_MAX) {
 			pixel--;
 		}
 		else {

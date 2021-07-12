@@ -11,10 +11,10 @@
 #include <iostream>
 
 void embedToFile(const std::string& file, const std::string& key, const std::string& message);
-void extractFromFile(const std::string& file, const std::string& key);
+std::string extractFromFile(const std::string& file, const std::string& key);
 
 int main(int argc, char* argv[]) {
-	std::string execName = argv[0];
+	std::string execName = argc > 0 ? argv[0] : "";
 	std::string embedUsage = execName + " embed [file] [key] [message]"; 
 	std::string extractUsage = execName + " extract [file] [key]";
 	
@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
 		}
 		else if (subcommand == "extract") {
 			if (argc == 4) {
-				extractFromFile(argv[2], argv[3]);
+				std::cout << extractFromFile(argv[2], argv[3]) << std::endl;
 				return 0;
 			}
 			else {
@@ -53,9 +53,22 @@ int main(int argc, char* argv[]) {
 }
 
 void embedToFile(const std::string& file, const std::string& key, const std::string& message) {
-	//Perform embedding, either printing nothing or a brief success message to stderr (not which is best)
+	int width, height, channels;
+	unsigned char* imageData = stbi_load(file.c_str(), &width, &height, &channels, 0);
+	if (imageData == NULL) {} //Todo: Throw exception
+	std::vector<unsigned char> image(imageData, imageData + width * height * channels);
+	hide::embed(image, key, message);
+	int success = stbi_write_png(file.c_str(), width, height, channels, &image[0], width * channels);
+	if (success != 0) {} //Todo: Throw exception
+	stbi_image_free(imageData);
 }
 
-void extractFromFile(const std::string& file, const std::string& key) {
-	//Perform extraction, printing the message to stdout
+std::string extractFromFile(const std::string& file, const std::string& key) {
+	int width, height, channels;
+	unsigned char* imageData = stbi_load(file.c_str(), &width, &height, &channels, 0);
+	if (imageData == NULL) {} //Todo: Throw exception
+	std::vector<unsigned char> image(imageData, imageData + width * height * channels);
+	std::string message = hide::extract(image, key);
+	stbi_image_free(imageData);
+	return message;
 }

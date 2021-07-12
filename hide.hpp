@@ -5,8 +5,8 @@
 #include <vector>
 
 namespace hide {
-	void embed(std::vector<uint8_t>& image, const std::string& message, const std::string& key);
-	std::string extract(const std::vector<uint8_t>& image, const std::string& key);
+	void embed(std::vector<unsigned char>& image, const std::string& key, const std::string& message);
+	std::string extract(const std::vector<unsigned char>& image, const std::string& key);
 }
 
 #endif
