@@ -58,23 +58,38 @@ int main(int argc, char* argv[]) {
 	return 1;
 }
 
+class PNG {
+private:
+        int width, height, channels;
+        unsigned char* pixelData;
+public:
+        std::string fileName;
+        std::vector<unsigned char> pixelArray;
+
+        PNG(const std::string& file) {
+                pixelData = stbi_load(file.c_str(), &width, &height, &channels, 0); 
+                if (pixelData == NULL) throw std::runtime_error(stbi_failure_reason()); 
+                pixelArray.assign(pixelData, pixelData + width * height * channels);
+                fileName = file;
+        }   
+
+        ~PNG() {
+                stbi_image_free(pixelData);
+        }   
+
+        void Save() {
+                int success = stbi_write_png(fileName.c_str(), width, height, channels, &pixelArray[0], width * channels);
+                if (success == 0) throw std::runtime_error("Could not save image");
+        }   
+};
+
 void embedToFile(const std::string& file, const std::string& key, const std::string& message) {
-	int width, height, channels;
-	unsigned char* imageData = stbi_load(file.c_str(), &width, &height, &channels, 0);
-	if (imageData == NULL) throw std::runtime_error(stbi_failure_reason()); 
-	std::vector<unsigned char> image(imageData, imageData + width * height * channels);
-	hide::embed(image, key, message);
-	int success = stbi_write_png(file.c_str(), width, height, channels, &image[0], width * channels);
-	if (success != 0) throw std::runtime_error("Could not save image"); 
-	stbi_image_free(imageData);
+        PNG image(file);
+        hide::embed(image.pixelArray, key, message);
+        image.Save();
 }
 
 std::string extractFromFile(const std::string& file, const std::string& key) {
-	int width, height, channels;
-	unsigned char* imageData = stbi_load(file.c_str(), &width, &height, &channels, 0);
-	if (imageData == NULL) throw std::runtime_error(stbi_failure_reason());
-	std::vector<unsigned char> image(imageData, imageData + width * height * channels);
-	std::string message = hide::extract(image, key);
-	stbi_image_free(imageData);
-	return message;
+        PNG image(file);
+        return hide::extract(image.pixelArray, key);
 }
