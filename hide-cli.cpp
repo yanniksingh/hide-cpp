@@ -11,7 +11,14 @@
 #include <iostream>
 #include <stdexcept>
 
+/*
+Modifies the image located at file to contain message such that it can be recovered with key.
+*/
 void embedToFile(const std::string& file, const std::string& key, const std::string& message);
+
+/*
+Given the key, recovers and returns the message embedded in the image located at file.
+*/
 std::string extractFromFile(const std::string& file, const std::string& key);
 
 int main(int argc, char* argv[]) {
@@ -58,27 +65,33 @@ int main(int argc, char* argv[]) {
 	return 1;
 }
 
+/*
+Provides access to the pixel data of a PNG image on the file system.
+*/
 class PNG {
 private:
         int width, height, channels;
         unsigned char* pixelData;
 public:
-        std::string fileName;
+        std::string filePath;
         std::vector<unsigned char> pixelArray;
 
         PNG(const std::string& file) {
                 pixelData = stbi_load(file.c_str(), &width, &height, &channels, 0); 
                 if (pixelData == NULL) throw std::runtime_error(stbi_failure_reason()); 
                 pixelArray.assign(pixelData, pixelData + width * height * channels);
-                fileName = file;
+                filePath = file;
         }   
 
         ~PNG() {
                 stbi_image_free(pixelData);
         }   
 
+	/*
+	Saves in-memory data to the file system.
+	*/
         void Save() {
-                int success = stbi_write_png(fileName.c_str(), width, height, channels, &pixelArray[0], width * channels);
+                int success = stbi_write_png(filePath.c_str(), width, height, channels, &pixelArray[0], width * channels);
                 if (success == 0) throw std::runtime_error("Could not save image");
         }   
 };

@@ -7,31 +7,43 @@
 
 namespace hide {
 	
+	/*
+	Returns a pseudo-random permutation of {0, 1, ... , length - 1} generated with the given seed.
+	*/
 	static std::vector<size_t> random_permutation(size_t length, const std::string& seed);
-	static bool extractSymbol(unsigned char pixel);
+
+	/*
+	Embeds a single bit of message (given by symbol) in one pixel of an image.
+	The value of random should be chosen uniformly at random each time the function is called.
+	*/
 	static void embedSymbol(unsigned char& pixel, bool symbol, bool random);
 
-	//Uses LSB matching steganography to embed the string message within the vector image, with the order of embedding determined by the secret key.
+	/*
+	Extracts a single bit of message from one pixel of an image.
+	*/
+	static bool extractSymbol(unsigned char pixel);
+	
 	void embed(std::vector<unsigned char>& image, const std::string& key, const std::string& message) {
-		//Make sure the message doesn't contain the null character, which is reserved
-		if (message.find('\0') != std::string::npos) throw std::invalid_argument("Message may not contain null characters");
+		/*
+		High-level overview: Use LSB Matching to embed the bits of message in the pixels of image.
+		The key determines the order in which the pixels of image are visited.
+		*/
 
-		//Append a null terminator to the message
+		if (message.find('\0') != std::string::npos) throw std::invalid_argument("Message may not contain embedded null characters");
+
+		//Append a null character, which indicates the end of the message during extraction
 		std::string messagePlusTerminator = message;
 		messagePlusTerminator.push_back('\0');
 
-		//Make sure the message can fit in the image; throw an exception if not
 		if (messagePlusTerminator.size() * CHAR_BIT > image.size()) throw std::invalid_argument("Message is too large to embed in image"); 
 
-		//Generate permuation
+		//The key determines the order in which the pixels of image are modified to contain the bits of message
 		std::vector<size_t> permutation = random_permutation(image.size(), key);
 		size_t positionInPermutation = 0;
 
-		//Create true random number generator
 		std::random_device rng;
 		std::uniform_int_distribution<int> coinFlip(0,1);
 
-		//Embed message + terminator in image
 		for (char currentChar : messagePlusTerminator) {
 			std::bitset<CHAR_BIT> bitsForChar (static_cast<unsigned char>(currentChar));
 			for (size_t bit = 0; bit < CHAR_BIT; bit++) {
@@ -41,55 +53,46 @@ namespace hide {
 		}
 	}
 	
-	//Returns the message embedded in the vector image given by the secret key.
-	//Will always return a message for all inputs, even for images which have not been passed to embed() or images passed to embed() with a different secret key.
 	std::string extract(const std::vector<unsigned char>& image, const std::string& key) {
-		//Initialize string to hold message
 		std::string messagePlusTerminator;
 
-		//Generate permutation from key
+		//Just like in embedding, the key determines the order in which the pixels of image are read
 		std::vector<size_t> permutation = random_permutation(image.size(), key);
 		size_t positionInPermutation = 0;
 
-		//Read the message from the image
+		//Read from the image, stopping when the null character is reached or all pixels are read
 		while (positionInPermutation < image.size() && (messagePlusTerminator.empty() || messagePlusTerminator.back() != '\0')) {
 			std::bitset<CHAR_BIT> bitsForChar;
 			for (size_t bit = 0; bit < CHAR_BIT; bit++) {
 				bitsForChar.set(bit, extractSymbol(image[permutation[positionInPermutation]]));
 				positionInPermutation++;
-				if (positionInPermutation >= image.size()) break;
+				if (positionInPermutation >= image.size()) break; //Reached the end of the image
 			}
 			messagePlusTerminator.push_back(static_cast<char>(bitsForChar.to_ulong()));
 		}
 		
-		//Remove terminator
+		//The message still contains its terminating null character, which should not be returned
 		messagePlusTerminator.pop_back();
 		
 		return messagePlusTerminator;
 	}
 
-	//Returns a vector containing a pseudo-random permutation of [0,1,...,length-1]
 	static std::vector<size_t> random_permutation(size_t length, const std::string& seed) {
-		//Ensure that length is valid
 		assert(length > 0);
 
-		//Create a vector containing [0,1,...length-1]
 		std::vector<size_t> sequence(length);
 		for (size_t i = 0; i < length; i++) {
 			sequence[i] = i;
 		}
 		
-		//Initialize the pseudo-random number generator
 		std::seed_seq seedSequence(seed.begin(), seed.end());	
 		std::mt19937 mt (seedSequence);
 
-		//Shuffle the vector (Fisher-Yates shuffle)
+		//Shuffle the vector with the Fisher-Yates shuffle
 		for (size_t i = 0; i < length - 1; i++) {
-			//Generate a random number between i and length-1, inclusive
 			std::uniform_int_distribution<size_t> uniform(i, length-1);
 			size_t j = uniform(mt);
 
-			//Swap sequence[i] and sequence[j]
 			size_t temp = sequence[i];
 			sequence[i] = sequence[j];
 			sequence[j] = temp;
@@ -97,14 +100,8 @@ namespace hide {
 		return sequence;
 	}
 	
-	//Returns the least significant bit of the byte pixel
-	static bool extractSymbol(unsigned char pixel) {
-		return ((pixel & 1) != 0);
-	}
-	
-	//Embeds the bit symbol in the byte pixel such that the least significant bit of pixel is equal to symbol.
-	//Implements the least significant bit matching (LSBM) method of steganography.
 	static void embedSymbol(unsigned char& pixel, bool symbol, bool random) {
+		//High-level overview: The pixel is modified such that its least significant bit is symbol.
 		if (symbol == extractSymbol(pixel)) {
 			return;
 		}
@@ -117,5 +114,9 @@ namespace hide {
 		else {
 			pixel = random ? (pixel + 1) : (pixel - 1);
 		}
+	}
+
+	static bool extractSymbol(unsigned char pixel) {
+		return ((pixel & 1) != 0);
 	}
 }
