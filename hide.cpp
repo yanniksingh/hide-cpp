@@ -1,5 +1,5 @@
 #include "hide.hpp"
-#include <exception>
+#include <stdexcept>
 #include <random>
 #include <string>
 #include <vector>
@@ -14,14 +14,14 @@ namespace hide {
 	//Uses LSB matching steganography to embed the string message within the vector image, with the order of embedding determined by the secret key.
 	void embed(std::vector<unsigned char>& image, const std::string& key, const std::string& message) {
 		//Make sure the message doesn't contain the null character, which is reserved
-		if (message.find('\0') != std::string::npos) throw std::invalid_argument("message may not contain null characters.");
+		if (message.find('\0') != std::string::npos) throw std::invalid_argument("Message may not contain null characters");
 
 		//Append a null terminator to the message
 		std::string messagePlusTerminator = message;
 		messagePlusTerminator.push_back('\0');
 
 		//Make sure the message can fit in the image; throw an exception if not
-		if (messagePlusTerminator.size() * CHAR_BIT > image.size()) throw std::invalid_argument("message is too large to embed in image."); 
+		if (messagePlusTerminator.size() * CHAR_BIT > image.size()) throw std::invalid_argument("Message is too large to embed in image"); 
 
 		//Generate permuation
 		std::vector<size_t> permutation = random_permutation(image.size(), key);

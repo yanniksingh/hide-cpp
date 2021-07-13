@@ -9,6 +9,7 @@
 #include "hide.hpp"
 #include <string>
 #include <iostream>
+#include <stdexcept>
 
 void embedToFile(const std::string& file, const std::string& key, const std::string& message);
 std::string extractFromFile(const std::string& file, const std::string& key);
@@ -20,28 +21,33 @@ int main(int argc, char* argv[]) {
 	
 	if (argc > 1) {
 		std::string subcommand = argv[1];
-		//Wrap this in a try-catch to report errors to the user through stderr
-		if (subcommand == "embed") {
-			if (argc == 5) {
-				embedToFile(argv[2], argv[3], argv[4]);
-				return 0;
+		try {
+			if (subcommand == "embed") {
+				if (argc == 5) {
+					embedToFile(argv[2], argv[3], argv[4]);
+					return 0;
+				}
+				else {
+					//Show embedding-specific help information
+					std::cerr << "usage: " << embedUsage << std::endl;
+					return 1;
+				}
 			}
-			else {
-				//Show embedding-specific help information
-				std::cerr << "usage: " << embedUsage << std::endl;
-				return 1;
+			else if (subcommand == "extract") {
+				if (argc == 4) {
+					std::cout << extractFromFile(argv[2], argv[3]) << std::endl;
+					return 0;
+				}
+				else {
+					//Show extraction-specific help information
+					std::cerr << "usage: " << extractUsage << std::endl;
+					return 1;
+				}
 			}
 		}
-		else if (subcommand == "extract") {
-			if (argc == 4) {
-				std::cout << extractFromFile(argv[2], argv[3]) << std::endl;
-				return 0;
-			}
-			else {
-				//Show extraction-specific help information
-				std::cerr << "usage: " << extractUsage << std::endl;
-				return 1;
-			}
+		catch (const std::exception& e) {
+			std::cerr << e.what() << std::endl;
+			return 1;
 		}
 	}
 
@@ -55,18 +61,18 @@ int main(int argc, char* argv[]) {
 void embedToFile(const std::string& file, const std::string& key, const std::string& message) {
 	int width, height, channels;
 	unsigned char* imageData = stbi_load(file.c_str(), &width, &height, &channels, 0);
-	if (imageData == NULL) {} //Todo: Throw exception
+	if (imageData == NULL) throw std::runtime_error(stbi_failure_reason()); 
 	std::vector<unsigned char> image(imageData, imageData + width * height * channels);
 	hide::embed(image, key, message);
 	int success = stbi_write_png(file.c_str(), width, height, channels, &image[0], width * channels);
-	if (success != 0) {} //Todo: Throw exception
+	if (success != 0) throw std::runtime_error("Could not save image"); 
 	stbi_image_free(imageData);
 }
 
 std::string extractFromFile(const std::string& file, const std::string& key) {
 	int width, height, channels;
 	unsigned char* imageData = stbi_load(file.c_str(), &width, &height, &channels, 0);
-	if (imageData == NULL) {} //Todo: Throw exception
+	if (imageData == NULL) throw std::runtime_error(stbi_failure_reason());
 	std::vector<unsigned char> image(imageData, imageData + width * height * channels);
 	std::string message = hide::extract(image, key);
 	stbi_image_free(imageData);
