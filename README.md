@@ -20,7 +20,7 @@ Hidden data is stored in the least significant bits of image pixel values, using
 
 ### Installation
 
-The command-line interface uses the single-file [stb-image and stb-image-write](https://github.com/nothings/stb) libraries to read and save images. These are downloaded automatically as a submodule.
+The command-line interface uses the single-file [stb_image and stb_image_write](https://github.com/nothings/stb) libraries to read and save images. These are downloaded automatically as a submodule.
 
 ```bash
 git clone --recurse-submodules https://github.com/yanniksingh/hide-cpp
@@ -38,10 +38,10 @@ clang++ hide.cpp hide-cli.cpp -o hide -std=c++11
 Currently, the command-line interface supports only PNG images. Other formats may be supported in the future.
 
 ```bash
-./hide embed [file] [key] [message]
+./hide embed [image-file] [password] [data]
 
 # Prints message
-./hide extract [file] [key]
+./hide extract [image-file] [password]
 ```
 
 #### C++ API

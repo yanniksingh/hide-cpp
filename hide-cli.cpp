@@ -23,8 +23,8 @@ std::string extractFromFile(const std::string& file, const std::string& key);
 
 int main(int argc, char* argv[]) {
 	std::string execName = argc > 0 ? argv[0] : "";
-	std::string embedUsage = execName + " embed [file] [key] [message]"; 
-	std::string extractUsage = execName + " extract [file] [key]";
+	std::string embedUsage = execName + " embed [image-file] [password] [data]"; 
+	std::string extractUsage = execName + " extract [image-file] [password]";
 	
 	if (argc > 1) {
 		std::string subcommand = argv[1];
@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	//Show general help information
-	std::cerr << "description: hide data in images with steganography" << std::endl << std::endl;
+	std::cerr << "description: a tool for hiding data in images" << std::endl << std::endl;
 	std::cerr << "usage: " << std::endl << '\t' << embedUsage << std::endl << '\t' << extractUsage << std::endl << std::endl;
 	std::cerr << "documentation: https://github.com/yanniksingh/hide-cpp" << std::endl;
 	return 1;
